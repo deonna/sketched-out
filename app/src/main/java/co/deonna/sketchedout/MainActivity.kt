@@ -1,7 +1,7 @@
-package com.ringer.sketchedout
+package co.deonna.sketchedout
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 

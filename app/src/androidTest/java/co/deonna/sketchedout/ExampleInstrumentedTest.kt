@@ -1,4 +1,4 @@
-package com.ringer.sketchedout
+package co.deonna.sketchedout
 
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
