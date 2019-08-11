@@ -5,12 +5,16 @@ import models.post.PostType
 import models.subreddit.SubredditType
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface SubredditEndpointInterface {
 
     @GET("/r/{subreddit}")
-    fun getSubreddit(@Path("subreddit") subreddit: String): Observable<SubredditType>
+    fun getSubreddit(@Path("subreddit") subreddit: String, @Query("after") after: String? = null):
+        Observable<SubredditType>
 
-    @GET("/{permalink}")
-    fun getPost(@Path("permalink") permalink: String): Observable<PostType>
+    @GET("{permalink}")
+    fun getPost(
+        @Path("permalink") permalink: String, @Query("after") after: String? = null
+    ): Observable<PostType>
 }
