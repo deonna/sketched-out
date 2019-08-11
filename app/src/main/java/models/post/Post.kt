@@ -1,9 +1,15 @@
 package models.post
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class Post(
-    val after: Any,
-    val before: Any,
-    val children: List<CommentType>,
-    val dist: Any,
-    val modhash: String
-)
+    @JsonProperty("after") val after: Any? = null,
+    @JsonProperty("before") val before: Any? = null,
+    @JsonProperty("children") val children: List<CommentType> = listOf(),
+    @JsonProperty("dist") val dist: Any? = null,
+    @JsonProperty("modhash") val modhash: String = ""
+) {
+    companion object {
+        val EMPTY = Post()
+    }
+}

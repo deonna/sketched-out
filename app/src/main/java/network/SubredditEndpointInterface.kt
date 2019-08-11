@@ -9,12 +9,12 @@ import retrofit2.http.Query
 
 interface SubredditEndpointInterface {
 
-    @GET("/r/{subreddit}")
+    @GET("/r/{subreddit}.json")
     fun getSubreddit(@Path("subreddit") subreddit: String, @Query("after") after: String? = null):
         Observable<SubredditType>
 
-    @GET("{permalink}")
+    @GET("/{permalink}.json")
     fun getPost(
         @Path("permalink") permalink: String, @Query("after") after: String? = null
-    ): Observable<PostType>
+    ): Observable<List<PostType>>
 }

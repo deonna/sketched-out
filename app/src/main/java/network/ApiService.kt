@@ -6,12 +6,12 @@ import models.subreddit.SubredditChild
 import models.subreddit.SubredditType
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.jackson.JacksonConverterFactory
 
 class ApiService {
 
     companion object {
-        private const val REDDIT_URL = "http://www.reddit.com"
+        private const val REDDIT_URL = "https://www.reddit.com"
         private const val SKETCH_DAILY = "SketchDaily"
         private const val SKETCH_DAILY_BOT = "sketchdailybot"
 
@@ -27,7 +27,7 @@ class ApiService {
     init {
         retrofit = Retrofit.Builder()
             .baseUrl(REDDIT_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(JacksonConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(observeOn))
             .build()
 
@@ -35,7 +35,7 @@ class ApiService {
     }
 
     fun getImageUrls(): Observable<Set<String>> {
-        val urlStream =  getListing()
+        val urlStream = getListing()
             .map { subredditType ->
                 getSketchDailyPermalinks(subredditType.subreddit.children)
             }
@@ -56,31 +56,48 @@ class ApiService {
     private fun getSketchDailyPermalinks(subredditChildren: List<SubredditChild>): List<String> {
         return subredditChildren
             .filter { it.subredditChildData.author == SKETCH_DAILY_BOT }
-            .map { it.subredditChildData.permalink }
+            .map {
+                val permalink = it.subredditChildData.permalink
+
+                // remove starting and ending slashes
+                permalink.subSequence(1, permalink.lastIndex).toString()
+            }
     }
 
     private fun getImageUrlsInPost(permalink: String): Observable<Set<String>> {
         val urls = subredditApiService
             .getPost(permalink)
-            .map { postType ->
-                postType.post.children
-                    .fold(mutableSetOf<String>(), { acc, commentType ->
-                        val body = commentType.comment.body
+            .map { postTypes ->
 
-                        acc.addAll(
-                            IMAGE_URL_REGEX.findAll(body)
-                                .map {
-                                    val match = it.value
+                val images = mutableSetOf<String>()
 
-                                    val url = match.subSequence(1, match.lastIndex - 1).toString()
+                postTypes
+                    .forEach { postType ->
+                        postType.post.children
+                            .filter { it.comment.depth == 0 } // only direct replies
+                            .forEach { commentType ->
+                                val body = commentType.comment.body
 
-                                    url
+
+                                val matches = IMAGE_URL_REGEX.findAll(body)
+                                    .map {
+                                        val match = it.value
+
+                                        val url =
+                                            match.subSequence(1, match.lastIndex).toString()
+
+                                        url
+                                    }.toSet()
+
+
+                                if (matches.isNotEmpty()) {
+                                    images.addAll(matches)
                                 }
-                        )
+                            }
 
-                        acc
-                    })
-                    .toSet()
+                    }
+
+                images.toSet()
             }
 
         return urls

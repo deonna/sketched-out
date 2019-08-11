@@ -1,6 +1,8 @@
 package models.subreddit
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class SubredditType(
-    val subreddit: Subreddit,
-    val kind: String
+    @JsonProperty("data") val subreddit: Subreddit = Subreddit.EMPTY,
+    @JsonProperty("kind") val kind: String = ""
 )

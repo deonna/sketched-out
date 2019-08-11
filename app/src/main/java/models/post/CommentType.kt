@@ -1,6 +1,8 @@
 package models.post
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class CommentType(
-    val comment: Comment,
-    val kind: String
+    @JsonProperty("data") val comment: Comment,
+    @JsonProperty("kind") val kind: String
 )
