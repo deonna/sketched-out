@@ -34,17 +34,32 @@ class ApiService {
         subredditApiService = retrofit.create(SubredditEndpointInterface::class.java)
     }
 
-    fun getListing(): Observable<SubredditType> {
+    fun getImageUrls(): Observable<Set<String>> {
+        val urlStream =  getListing()
+            .map { subredditType ->
+                getSketchDailyPermalinks(subredditType.subreddit.children)
+            }
+            .flatMapIterable { permalinks ->
+                permalinks.map { permalink ->
+                    getImageUrlsInPost(permalink)
+                }
+            }
+            .flatMap { it }
+
+        return urlStream
+    }
+
+    private fun getListing(): Observable<SubredditType> {
         return subredditApiService.getSubreddit(SKETCH_DAILY)
     }
 
-    fun getSketchDailyPermalinks(subredditChildren: List<SubredditChild>): List<String> {
+    private fun getSketchDailyPermalinks(subredditChildren: List<SubredditChild>): List<String> {
         return subredditChildren
             .filter { it.subredditChildData.author == SKETCH_DAILY_BOT }
             .map { it.subredditChildData.permalink }
     }
 
-    fun getImageUrlsInPost(permalink: String): Observable<Set<String>> {
+    private fun getImageUrlsInPost(permalink: String): Observable<Set<String>> {
         val urls = subredditApiService
             .getPost(permalink)
             .map { postType ->
@@ -52,7 +67,16 @@ class ApiService {
                     .fold(mutableSetOf<String>(), { acc, commentType ->
                         val body = commentType.comment.body
 
-                        acc.addAll(IMAGE_URL_REGEX.findAll(body).map { it.value })
+                        acc.addAll(
+                            IMAGE_URL_REGEX.findAll(body)
+                                .map {
+                                    val match = it.value
+
+                                    val url = match.subSequence(1, match.lastIndex - 1).toString()
+
+                                    url
+                                }
+                        )
 
                         acc
                     })
